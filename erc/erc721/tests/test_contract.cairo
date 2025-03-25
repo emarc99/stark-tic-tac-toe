@@ -3,7 +3,7 @@ use core::traits::Into;
 use core::result::ResultTrait;
 use starknet::{ContractAddress, contract_address_const};
 use core::byte_array::ByteArray;
-// use openzeppelin_token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
+// use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
 use erc::erc721::{IERC721Dispatcher as NFTDispatcher, IERC721DispatcherTrait as
 NFTDispatcherTrait};
 use snforge_std::{
@@ -20,10 +20,19 @@ fn caller() -> ContractAddress {
     contract_address_const::<'CALLER'>()
 }
 
-fn recipient() -> ContractAddress {
-    contract_address_const::<'RECIPIENT'>()
+const SUCCESS: felt252 = 'SUCCESS';
+
+// Helper function to declare and deploy the receiver mock
+fn setup_receiver() -> ContractAddress {
+    let receiver_class = declare("DualCaseERC721ReceiverMock").unwrap().contract_class();
+    let (contract_address, _) = receiver_class.deploy(@array![]).unwrap();
+    contract_address
 }
 
+// Now recipient will be the deployed mock contract
+fn recipient() -> ContractAddress {
+    setup_receiver()
+}
 
 fn setup_dispatcher() -> (ContractAddress, NFTDispatcher) {
 
@@ -52,65 +61,24 @@ fn setup_dispatcher() -> (ContractAddress, NFTDispatcher) {
     (address, NFTDispatcher { contract_address: address })
 }
 
-// #[test]
-// fn test_successful_mint() {
-//     // Deploy the contract and get the dispatcher
-//     let (contract_address, dispatcher) = setup_dispatcher();
-//     let recipient = contract_address_const::<'RECIPIENT'>();
-//     let token_id: u256 = 1;
-
-//     // Cheat the caller address to be the owner
-//     start_cheat_caller_address(contract_address, owner());
-
-//     // Mint the token
-//     dispatcher.mint(recipient, token_id);
-
-//     // Stop cheating the caller address
-//     stop_cheat_caller_address(contract_address);
-
-//     // Create a dispatcher for assertions
-//     let erc721 = NFTDispatcher { contract_address };
-
-//     // Assert that the token is owned by the recipient
-//     assert(erc721.owner_of(token_id) == recipient, 'Wrong owner');
-
-//     // Assert that the recipient's balance is 1
-//     assert(erc721.balance_of(recipient) == 1, 'Wrong balance');
-// }
-
-// #[test]
-// #[should_panic(expected: ('Caller is not the owner',))]
-// fn test_mint_not_owner() {
-//     // Deploy the contract and get the dispatcher
-//     let (contract_address, dispatcher) = setup_dispatcher();
-//     let recipient = contract_address_const::<'RECIPIENT'>();
-//     let token_id: u256 = 1;
-
-//     // Cheat the caller address to be a non-owner
-//     start_cheat_caller_address(contract_address, caller());
-
-//     // Attempt to mint the token, expecting a panic
-//     dispatcher.mint(recipient, token_id);
-
-//     // Stop cheating the caller address
-//     stop_cheat_caller_address(contract_address);
-// }
-
-
 #[test]
 fn test_successful_mint() {
     let (contract_address, dispatcher) = setup_dispatcher();
     // let recipient = contract_address_const::<'RECIPIENT'>();
     let token_id: u256 = 1;
-    let data: Span<felt252> = array![].span();
-    let recipient = recipient();
+
+    // Option 1: Send empty data
+    let empty_data: Span<felt252> = array![].span();
+
+    // Option 2: Send SUCCESS data
+    let success_data: Span<felt252> = array![SUCCESS].span();
 
     // deploy a mock (ERC721Received) contract at the recipient address
-    deploy_contract(recipient);
+    let recipient = recipient();
 
     // Mint the token
     start_cheat_caller_address(contract_address, owner());
-    dispatcher.safe_mint(recipient, token_id, data);
+    dispatcher.safe_mint(recipient, token_id, success_data);
     stop_cheat_caller_address(contract_address);
 
     let erc721 = NFTDispatcher { contract_address };
@@ -124,9 +92,10 @@ fn test_mint_not_owner() {
     let (contract_address, dispatcher) = setup_dispatcher();
     let recipient = contract_address_const::<'RECIPIENT'>();
     let token_id: u256 = 1;
-    let data: Span<felt252> = array![].span();
+    let empty_data: Span<felt252> = array![].span();
 
+    // Attempt to mint the token, expecting a panic
     start_cheat_caller_address(contract_address, caller());
-    dispatcher.safe_mint(recipient, token_id, data);
+    dispatcher.safe_mint(recipient, token_id, empty_data);
     stop_cheat_caller_address(contract_address);
 }
