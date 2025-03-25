@@ -1,15 +1,14 @@
 use core::array::ArrayTrait;
-use core::traits::Into;
-use core::result::ResultTrait;
-use starknet::{ContractAddress, contract_address_const};
 use core::byte_array::ByteArray;
+use core::result::ResultTrait;
+use core::traits::Into;
 // use openzeppelin::token::erc721::interface::{ERC721ABIDispatcher, ERC721ABIDispatcherTrait};
-use erc::erc721::{IERC721Dispatcher as NFTDispatcher, IERC721DispatcherTrait as
-NFTDispatcherTrait};
+use erc::erc721::{IERC721Dispatcher as NFTDispatcher, IERC721DispatcherTrait as NFTDispatcherTrait};
 use snforge_std::{
-    declare, ContractClassTrait, DeclareResultTrait, start_cheat_caller_address,
+    ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address,
     stop_cheat_caller_address,
 };
+use starknet::{ContractAddress, contract_address_const};
 
 // Account functions
 fn owner() -> ContractAddress {
@@ -35,7 +34,6 @@ fn recipient() -> ContractAddress {
 }
 
 fn setup_dispatcher() -> (ContractAddress, NFTDispatcher) {
-
     let owner_address: ContractAddress = contract_address_const::<'OWNER'>();
     // Declare the contract
     let contract = declare("ERC721").unwrap().contract_class();

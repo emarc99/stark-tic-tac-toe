@@ -10,7 +10,9 @@ pub trait IERC721<TContractState> {
 
     // NFT Contract
     fn mint(ref self: TContractState, recipient: ContractAddress, token_id: u256);
-    fn safe_mint(ref self: TContractState, to: ContractAddress, token_id: u256, data: Span<felt252>);
+    fn safe_mint(
+        ref self: TContractState, to: ContractAddress, token_id: u256, data: Span<felt252>,
+    );
 }
 
 #[starknet::contract]
@@ -21,8 +23,8 @@ mod ERC721 {
     use openzeppelin::security::pausable::PausableComponent;
     use openzeppelin::token::erc721::ERC721Component;
     use openzeppelin::token::erc721::extensions::ERC721EnumerableComponent;
-    use openzeppelin::upgrades::interface::IUpgradeable;
     use openzeppelin::upgrades::UpgradeableComponent;
+    use openzeppelin::upgrades::interface::IUpgradeable;
     use starknet::{ClassHash, ContractAddress, get_caller_address};
 
     component!(path: ERC721Component, storage: erc721, event: ERC721Event);
@@ -86,11 +88,17 @@ mod ERC721 {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress, name: ByteArray, symbol: ByteArray, base_uri: ByteArray) {
+    fn constructor(
+        ref self: ContractState,
+        owner: ContractAddress,
+        name: ByteArray,
+        symbol: ByteArray,
+        base_uri: ByteArray,
+    ) {
         self.erc721.initializer(name, symbol, base_uri);
         self.ownable.initializer(owner);
         self.erc721_enumerable.initializer();
-    } 
+    }
 
     impl ERC721HooksImpl of ERC721Component::ERC721HooksTrait<ContractState> {
         fn before_update(
