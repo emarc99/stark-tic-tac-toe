@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Compatible with OpenZeppelin Contracts for Cairo ^0.20.0
 
+use starknet::ContractAddress;
+
+#[starknet::interface]
+pub trait IERC721<TContractState> {
+    fn mint(ref self: TContractState, recipient: ContractAddress, token_id: u256);
+}
+
 #[starknet::contract]
 mod ERC721 {
     use core::num::traits::Zero;
@@ -74,11 +81,11 @@ mod ERC721 {
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, owner: ContractAddress) {
-        self.erc721.initializer("ERC721", "", "");
+    fn constructor(ref self: ContractState, owner: ContractAddress, name: ByteArray, symbol: ByteArray, base_uri: ByteArray) {
+        self.erc721.initializer(name, symbol, base_uri);
         self.ownable.initializer(owner);
         self.erc721_enumerable.initializer();
-    }
+    } 
 
     impl ERC721HooksImpl of ERC721Component::ERC721HooksTrait<ContractState> {
         fn before_update(
